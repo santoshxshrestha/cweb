@@ -621,7 +621,7 @@ impl CInterpreter {
         Ok(())
     }
 
-    fn evaluate_condition(&self, condition: &str) -> Result<bool, String> {
+    fn evaluate_condition(&mut self, condition: &str) -> Result<bool, String> {
         let condition = condition.trim();
 
         // Handle logical operators
@@ -1444,7 +1444,7 @@ impl CInterpreter {
         Ok(())
     }
 
-    fn evaluate_value_expression(&self, expr: &str) -> Result<Value, String> {
+    fn evaluate_value_expression(&mut self, expr: &str) -> Result<Value, String> {
         let expr = expr.trim();
         
         // Check if it's a string literal
@@ -1468,7 +1468,7 @@ impl CInterpreter {
         Ok(Value::Int(num))
     }
 
-    fn evaluate_numeric_expression(&self, expr: &str) -> Result<i64, String> {
+    fn evaluate_numeric_expression(&mut self, expr: &str) -> Result<i64, String> {
         let expr = expr.trim();
         
         // Check if it's a number

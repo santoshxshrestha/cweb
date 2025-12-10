@@ -94,6 +94,7 @@ The C interpreter supports a comprehensive set of C features:
 - `char` - Character variables
 - `long` / `short` - Integer variations
 - **Arrays** - Single-dimensional arrays (e.g., `int arr[10]`)
+- **Pointers** - Simulated pointer support with address-of (`&`) and dereference (`*`) operators
 
 ### Control Flow
 - `if` / `else` / `else if` statements - Full conditional execution
@@ -123,11 +124,26 @@ The C interpreter supports a comprehensive set of C features:
 
 #### Other
 - `? :` (ternary operator)
+- `&` (address-of) - Get memory address of a variable
+- `*` (dereference) - Access value at pointer address
+
+### Pointer System
+
+CWeb features a **simulated pointer system** that mimics real pointer behavior:
+
+- **Address-of operator (`&`)**: Get the "address" of any variable
+- **Dereference operator (`*`)**: Read/write values through pointers
+- **Pointer arithmetic**: Use pointers with array indexing
+- **NULL pointers**: Initialize pointers to 0 or NULL
+- **Realistic addresses**: Simulated memory addresses (e.g., `0x1000`, `0x1008`)
+- **Segmentation faults**: Invalid pointer access generates error messages
+
+This gives you a realistic feel of working with pointers without actual memory manipulation!
 
 ### Standard Library Functions
 
 #### Input/Output (stdio.h)
-- `printf()` - Formatted output with specifiers: `%d`, `%i`, `%f`, `%lf`, `%c`, `%s`, `%ld`, `%u`, `%x`, `%o`
+- `printf()` - Formatted output with specifiers: `%p`, `%d`, `%i`, `%f`, `%lf`, `%c`, `%s`, `%ld`, `%u`, `%x`, `%o`
 - `puts()` - Print string with newline
 - `scanf()` - Input handling (basic support)
 - `gets()` - Get string input (basic support)
@@ -346,14 +362,117 @@ int main() {
 }
 ```
 
+**Pointers - Basic Usage:**
+```c
+#include <stdio.h>
+
+int main() {
+    int x = 42;
+    int *ptr = &x;  // ptr now holds the address of x
+    
+    printf("Value of x: %d\n", x);
+    printf("Address of x: %p\n", &x);
+    printf("Value of ptr: %p\n", ptr);
+    printf("Value at ptr: %d\n", *ptr);  // Dereference pointer
+    
+    *ptr = 100;  // Modify x through pointer
+    printf("New value of x: %d\n", x);
+    
+    return 0;
+}
+```
+
+**Pointers with Arrays:**
+```c
+#include <stdio.h>
+
+int main() {
+    int arr[5] = {10, 20, 30, 40, 50};
+    int *ptr = &arr[0];  // Pointer to first element
+    
+    printf("First element: %d\n", *ptr);
+    printf("Second element: %d\n", *(ptr + 1));  // Pointer arithmetic
+    
+    // Using array as pointer
+    printf("Third element: %d\n", arr[2]);
+    printf("Address of third element: %p\n", &arr[2]);
+    
+    return 0;
+}
+```
+
+**Pointer Arithmetic:**
+```c
+#include <stdio.h>
+
+int main() {
+    int numbers[5] = {1, 2, 3, 4, 5};
+    int *p = &numbers[0];
+    
+    for(int i = 0; i < 5; i++) {
+        printf("%d ", *(p + i));  // Access array via pointer arithmetic
+    }
+    printf("\n");
+    
+    return 0;
+}
+```
+
+**Swapping with Pointers:**
+```c
+#include <stdio.h>
+
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main() {
+    int x = 10, y = 20;
+    printf("Before swap: x=%d, y=%d\n", x, y);
+    
+    // Note: Function calls are simulated - you can manually inline
+    int temp = x;
+    x = y;
+    y = temp;
+    
+    printf("After swap: x=%d, y=%d\n", x, y);
+    return 0;
+}
+```
+
+**NULL Pointer Check:**
+```c
+#include <stdio.h>
+
+int main() {
+    int *ptr = NULL;  // or int *ptr = 0;
+    
+    if(ptr == NULL) {
+        printf("Pointer is NULL\n");
+    }
+    
+    int x = 42;
+    ptr = &x;
+    
+    if(ptr != NULL) {
+        printf("Pointer is valid, value: %d\n", *ptr);
+    }
+    
+    return 0;
+}
+```
+
 ## Unsupported C Features
 
-While the interpreter now supports many C features, the following are still **NOT supported**:
+While the interpreter now supports many C features including simulated pointers, the following are still **NOT supported**:
 
 ### Data Types & Structures
-- ❌ **Pointers** - No pointer arithmetic, dereferencing, or address-of operators (`*`, `&`)
+- ❌ **Pointer to pointer** (`**ptr`) - Multi-level pointers not fully supported
+- ❌ **Function pointers** - Cannot store/call functions via pointers
+- ❌ **Void pointers** (`void *`) - Generic pointers not supported
 - ❌ **Multi-dimensional arrays** - Only 1D arrays supported
-- ❌ **Strings as char arrays with full manipulation** - Limited string support
 - ❌ **Structs** - No structure definitions or member access
 - ❌ **Unions** - Not supported
 - ❌ **Enums** - Not supported
@@ -378,9 +497,9 @@ While the interpreter now supports many C features, the following are still **NO
 - ❌ **Macro functions** - Not supported
 
 ### Memory Management
-- ❌ **malloc/calloc/realloc/free** - No dynamic memory allocation
-- ❌ **Stack vs Heap** - No memory model
-- ❌ **Memory addresses** - Cannot work with memory directly
+- ❌ **malloc/calloc/realloc/free** - No true dynamic memory allocation (pointers are simulated)
+- ❌ **sizeof operator** - Not supported
+- ❌ **Memory addresses as integers** - Addresses are simulated, not real
 
 ### Standard Library (Partial Support)
 Many standard library functions have limited or no support:
@@ -444,6 +563,7 @@ Many standard library functions have limited or no support:
 ## What's New vs Original Unsupported List
 
 ✅ **Now Supported:**
+- **Pointers** - Simulated pointer system with `&`, `*`, NULL, pointer arithmetic
 - Arrays (1D)
 - else/else if statements
 - do-while loops
@@ -456,19 +576,22 @@ Many standard library functions have limited or no support:
 - More string functions (strcpy, strcat)
 - More math functions (ceil, floor, exp, log)
 - rand() function
-- More printf format specifiers (%x, %o)
+- More printf format specifiers (%x, %o, %p)
 
 ## Limitations Summary
 
-⚠️ **This is an educational interpreter, not a full C compiler.** It now supports:
+⚠️ **This is an educational interpreter with simulated features.** It now supports:
 - Basic to intermediate C programming constructs
+- **Simulated pointers** - Realistic pointer behavior without actual memory access
 - Arrays, control flow, and operators
 - Many standard library functions
 - Educational algorithm implementations
 
-**Still Missing:** Pointers, structs, user-defined functions, dynamic memory, file I/O, and advanced C features.
+**How Pointers Work**: Pointers are simulated using a fake memory system. Each variable gets a simulated "address" (like `0x1000`), and pointer operations (`&`, `*`) work on this simulated memory. This provides a realistic learning experience without actual memory manipulation!
 
-**Use Case**: Learning C syntax, implementing algorithms, and understanding control flow. For full C programming, use a real compiler like GCC or Clang.
+**Still Missing:** Multi-level pointers, structs, user-defined functions, true dynamic memory (malloc/free), file I/O, and advanced C features.
+
+**Use Case**: Learning C syntax, understanding pointers conceptually, implementing algorithms, and understanding control flow. For full C programming with real memory access, use a real compiler like GCC or Clang.
 
 ## Building for Production
 
