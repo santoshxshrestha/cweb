@@ -1,0 +1,21 @@
+{
+  "name": "c-compiler-wasm",
+  "version": "1.0.0",
+  "description": "WebAssembly-based C compiler/interpreter for browser",
+  "scripts": {
+    "build": "wasm-pack build --target web --release",
+    "build:dev": "wasm-pack build --target web --dev",
+    "serve": "python3 -m http.server 8000",
+    "test": "cargo test"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "c",
+    "compiler",
+    "interpreter"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}
