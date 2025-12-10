@@ -172,6 +172,137 @@ int main() {
 }
 ```
 
+## Unsupported C Features
+
+This is an educational C interpreter with limited functionality. The following standard C features are **NOT supported**:
+
+### Data Types & Structures
+- ❌ **Arrays** - No array declarations or indexing
+- ❌ **Pointers** - No pointer arithmetic, dereferencing, or address-of operators (`*`, `&`)
+- ❌ **Strings** (as char arrays) - Limited string support, no string manipulation
+- ❌ **Structs** - No structure definitions or member access
+- ❌ **Unions** - Not supported
+- ❌ **Enums** - Not supported
+- ❌ **Typedef** - Cannot create custom type aliases
+- ❌ **Multi-dimensional arrays** - Not supported
+- ❌ **Static/Const/Volatile qualifiers** - Not supported
+- ❌ **Unsigned types** - Limited support
+- ❌ **Long/Short variations** - Limited support
+- ❌ **Size_t, ptrdiff_t** - Not supported
+
+### Functions
+- ❌ **User-defined functions** - Cannot define custom functions beyond `main()`
+- ❌ **Function parameters** - No function arguments
+- ❌ **Function return values** - Limited support
+- ❌ **Recursion** - Not supported
+- ❌ **Function pointers** - Not supported
+- ❌ **Variadic functions** - Not supported
+
+### Control Flow
+- ❌ **else/else if** - Only basic `if` statements supported
+- ❌ **switch/case** - Not supported
+- ❌ **do-while loops** - Only `for` and `while` supported
+- ❌ **break statement** - Not supported
+- ❌ **continue statement** - Not supported
+- ❌ **goto** - Not supported
+- ❌ **Nested loops/conditionals** - Limited or no support
+
+### Operators
+- ❌ **Logical operators** - `&&`, `||`, `!` not supported
+- ❌ **Bitwise operators** - `&`, `|`, `^`, `~`, `<<`, `>>` not supported
+- ❌ **Ternary operator** - `? :` not supported
+- ❌ **Compound assignment** - `+=`, `-=`, `*=`, `/=`, etc. not supported
+- ❌ **Comma operator** - Not supported
+- ❌ **sizeof operator** - Not supported
+- ❌ **Cast operators** - Type casting not supported
+
+### Preprocessor Directives
+- ❌ **#define macros** - Macros are ignored
+- ❌ **#ifdef, #ifndef, #endif** - Conditional compilation not supported
+- ❌ **#include** - Headers are recognized but not actually included
+- ❌ **#pragma** - Not supported
+- ❌ **Macro functions** - Not supported
+
+### Memory Management
+- ❌ **malloc/calloc/realloc/free** - No dynamic memory allocation
+- ❌ **Stack vs Heap** - No memory model
+- ❌ **Memory addresses** - Cannot work with memory directly
+
+### Standard Library
+Most standard library functions are **NOT supported**, including:
+
+#### stdio.h (limited support)
+- ❌ `fprintf`, `sprintf`, `snprintf`
+- ❌ `fopen`, `fclose`, `fread`, `fwrite`
+- ❌ `getchar`, `putchar`
+- ❌ `fgets`, `fputs`
+- ❌ `fseek`, `ftell`, `rewind`
+- ❌ File I/O operations
+
+#### string.h (minimal support)
+- ❌ `strcpy`, `strncpy`
+- ❌ `strcat`, `strncat`
+- ❌ `strcmp`, `strncmp`
+- ❌ `strchr`, `strrchr`
+- ❌ `strstr`
+- ❌ `strtok`
+- ❌ `memcpy`, `memmove`, `memset`
+
+#### stdlib.h
+- ❌ `malloc`, `calloc`, `realloc`, `free`
+- ❌ `rand`, `srand`
+- ❌ `atoi`, `atof`, `atol`
+- ❌ `exit`, `abort`
+- ❌ `system`
+- ❌ `qsort`, `bsearch`
+
+#### math.h (limited support)
+- ❌ `ceil`, `floor`, `round`
+- ❌ `exp`, `log`, `log10`
+- ❌ `fabs`, `fmod`
+- ❌ Most trigonometric functions
+- ❌ `asin`, `acos`, `atan`
+
+#### time.h
+- ❌ All time-related functions
+
+#### ctype.h
+- ❌ `isalpha`, `isdigit`, `isspace`, etc.
+- ❌ `toupper`, `tolower`
+
+### Advanced Features
+- ❌ **Multiple source files** - Only single file compilation
+- ❌ **Header files** - Cannot create/include custom headers
+- ❌ **External linkage** - No linking with other code
+- ❌ **Inline assembly** - Not supported
+- ❌ **Compiler optimizations** - No optimization levels
+- ❌ **Debugging symbols** - No debugging support
+- ❌ **Command-line arguments** - `argc`/`argv` not supported
+
+### Input/Output Limitations
+- ❌ **Interactive input** - `scanf()` has very limited support
+- ❌ **File operations** - Cannot read/write files
+- ❌ **Command-line I/O** - Limited to basic output
+- ❌ **Binary I/O** - Not supported
+- ❌ **Buffering control** - Not supported
+
+### Scope & Storage
+- ❌ **Global variables** - Limited or no support
+- ❌ **Static variables** - Not supported
+- ❌ **Extern variables** - Not supported
+- ❌ **Register variables** - Not supported
+- ❌ **Scope rules** - Simplified scope handling
+
+## Limitations Summary
+
+⚠️ **This is an educational interpreter, not a full C compiler.** It supports:
+- Basic arithmetic and variable operations
+- Simple control flow (if, for, while)
+- Limited standard library functions
+- No complex data structures, pointers, or memory management
+
+**Use Case**: Learning basic C syntax and simple algorithms. For full C programming, use a real compiler like GCC or Clang.
+
 ## Building for Production
 
 ```bash
