@@ -109,6 +109,19 @@ export default function Home() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Listen for Ctrl+Enter to run code
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        handleRunCode();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [code, wasmReady, isRunning]); // Dependencies needed for handleRunCode
+
   const handleRunCode = async () => {
     if (!wasmReady) {
       setOutput('Error: Compiler is still loading. Please wait...');
@@ -196,7 +209,7 @@ export default function Home() {
                 </div>
               )}
               <div className="text-xs text-gray-500">
-                Ctrl+Space: autocomplete
+                Ctrl+Space: autocomplete | Ctrl+Enter: run
               </div>
             </div>
           </div>
