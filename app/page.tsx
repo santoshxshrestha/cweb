@@ -203,13 +203,24 @@ export default function Home() {
               <span className="text-xs text-gray-500">main.c</span>
             </div>
             <div className="flex items-center gap-2">
+              {/* Theme Selector */}
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as EditorTheme)}
+                className="px-2 py-0.5 text-xs bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+                title="Select theme"
+              >
+                {EDITOR_THEMES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
               {vimMode && (
                 <div className="px-2 py-0.5 bg-purple-600 text-white text-xs rounded">
                   VIM
                 </div>
               )}
               <div className="text-xs text-gray-500">
-                Ctrl+Space: autocomplete | Ctrl+Enter: run
+                Ctrl+Space: autocomplete
               </div>
             </div>
           </div>
@@ -268,43 +279,31 @@ export default function Home() {
       </div>
 
       {/* Right Control Panel */}
-      <div className="flex flex-col gap-1 p-1 bg-gray-900 border-l border-gray-800">
+      <div className="flex flex-col gap-0.5 p-0.5 bg-gray-900 border-l border-gray-800">
         {/* Run Button */}
         <button
           onClick={handleRunCode}
           disabled={isRunning || !wasmReady}
-          className="px-2 py-1.5 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors flex flex-col items-center gap-0.5 min-w-[60px]"
+          className="px-1.5 py-2 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors flex flex-col items-center gap-0.5 min-w-[48px]"
           title="Run code (Ctrl+Enter)"
         >
           {isRunning ? (
             <>
               <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span className="text-[10px]">Run...</span>
+              <span className="text-[9px]">Run...</span>
             </>
           ) : (
             <>
-              <span className="text-base">▶</span>
-              <span className="text-[10px]">Run</span>
+              <span className="text-sm">▶</span>
+              <span className="text-[9px]">Run</span>
             </>
           )}
         </button>
 
-        {/* Theme Selector */}
-        <select
-          value={theme}
-          onChange={(e) => setTheme(e.target.value as EditorTheme)}
-          className="px-1 py-1 text-[10px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
-          title="Select theme"
-        >
-          {EDITOR_THEMES.map(t => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-
         {/* Vim Mode Toggle */}
         <button
           onClick={toggleVimMode}
-          className={`px-2 py-1.5 text-[10px] rounded transition-colors flex flex-col items-center gap-0.5 ${
+          className={`px-1.5 py-2 text-[9px] rounded transition-colors flex flex-col items-center gap-0.5 ${
             vimMode 
               ? 'bg-purple-600 hover:bg-purple-700 text-white' 
               : 'bg-gray-800 hover:bg-gray-700 text-white'
@@ -321,7 +320,7 @@ export default function Home() {
         {/* Output Panel Toggle */}
         <button
           onClick={toggleOutputPanel}
-          className={`px-2 py-1.5 text-[10px] rounded transition-colors flex flex-col items-center gap-0.5 ${
+          className={`px-1.5 py-2 text-[9px] rounded transition-colors flex flex-col items-center gap-0.5 ${
             isOutputVisible 
               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
               : 'bg-gray-800 hover:bg-gray-700 text-white'
@@ -338,7 +337,7 @@ export default function Home() {
         {/* Fullscreen Toggle */}
         <button
           onClick={toggleFullscreen}
-          className="px-2 py-1.5 text-[10px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors flex flex-col items-center gap-0.5"
+          className="px-1.5 py-2 text-[9px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors flex flex-col items-center gap-0.5"
           title="Toggle fullscreen"
         >
           {isFullscreen ? (
