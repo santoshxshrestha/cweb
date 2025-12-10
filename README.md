@@ -213,4 +213,4 @@ MIT
 
 ## Acknowledgments
 
-Built with Next.js, Rust, and WebAssembly.
+Built with Next.js, Rust, and WebAssembly. CWeb - A modern online C compiler running entirely in your browser.
