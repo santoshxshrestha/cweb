@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { initWasm, compileAndRunC, isWasmInitialized } from '@/lib/wasmLoader';
+import { initWasm, compileAndRunC } from '@/lib/wasmLoader';
 
 // Dynamically import CodeEditor to avoid SSR issues with Ace Editor
 const CodeEditor = dynamic(() => import('@/components/CodeEditor'), {
@@ -71,6 +71,44 @@ export default function Home() {
     loadWasm();
   }, []);
 
+  // Handle mouse move during resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !containerRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth;
+      const deltaX = e.clientX - resizeStartX.current;
+      const deltaPercent = (deltaX / containerWidth) * 100;
+      const newWidth = Math.min(Math.max(resizeStartWidth.current + deltaPercent, 30), 90);
+      
+      setEditorWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   const handleRunCode = async () => {
     if (!wasmReady) {
       setOutput('Error: Compiler is still loading. Please wait...');
@@ -79,6 +117,11 @@ export default function Home() {
 
     setIsRunning(true);
     setOutput('Compiling and running...\n');
+    
+    // Show output panel when running code
+    if (!isOutputVisible) {
+      setIsOutputVisible(true);
+    }
     
     try {
       // Compile and run the C code using WASM
@@ -100,12 +143,32 @@ export default function Home() {
     setOutput('');
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'monokai' ? 'github' : 'monokai');
-  };
-
   const toggleVimMode = () => {
     setVimMode(prev => !prev);
+  };
+
+  // Handle mouse down on resize handle
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = editorWidth;
+  };
+
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Toggle output panel visibility
+  const toggleOutputPanel = () => {
+    setIsOutputVisible(prev => !prev);
   };
 
   return (
@@ -119,6 +182,18 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Theme Selector */}
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as EditorTheme)}
+            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {EDITOR_THEMES.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+
+          {/* Vim Mode Toggle */}
           <button
             onClick={toggleVimMode}
             className={`px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -126,15 +201,34 @@ export default function Home() {
                 ? 'bg-purple-600 hover:bg-purple-700 text-white' 
                 : 'bg-gray-800 hover:bg-gray-700 text-white'
             }`}
+            title="Toggle Vim mode"
           >
             Vim: {vimMode ? 'ON' : 'OFF'}
           </button>
+
+          {/* Output Panel Toggle */}
           <button
-            onClick={toggleTheme}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            onClick={toggleOutputPanel}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              isOutputVisible 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-gray-800 hover:bg-gray-700 text-white'
+            }`}
+            title="Toggle output panel"
           >
-            Theme: {theme === 'monokai' ? 'Dark' : 'Light'}
+            {isOutputVisible ? '📊 Hide Output' : '📊 Show Output'}
           </button>
+
+          {/* Fullscreen Toggle */}
+          <button
+            onClick={toggleFullscreen}
+            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            title="Toggle fullscreen"
+          >
+            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+          </button>
+
+          {/* Run Code Button */}
           <button
             onClick={handleRunCode}
             disabled={isRunning || !wasmReady}
@@ -156,9 +250,12 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div ref={containerRef} className="flex flex-1 overflow-hidden">
         {/* Editor Panel */}
-        <div className="flex flex-col w-2/3 border-r border-gray-800">
+        <div 
+          className="flex flex-col border-r border-gray-800 transition-all duration-200"
+          style={{ width: isOutputVisible ? `${editorWidth}%` : '100%' }}
+        >
           <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
             <h2 className="text-sm font-semibold text-gray-300">main.c</h2>
             <div className="flex items-center gap-4">
@@ -182,23 +279,48 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Resize Handle */}
+        {isOutputVisible && (
+          <div
+            onMouseDown={handleMouseDown}
+            className={`w-1 bg-gray-700 hover:bg-blue-500 cursor-col-resize transition-colors ${
+              isResizing ? 'bg-blue-500' : ''
+            }`}
+            title="Drag to resize"
+          />
+        )}
+
         {/* Output Panel */}
-        <div className="flex flex-col w-1/3 bg-gray-900">
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-            <h2 className="text-sm font-semibold text-gray-300">Output</h2>
-            <button
-              onClick={handleClearOutput}
-              className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
-            >
-              Clear
-            </button>
+        {isOutputVisible && (
+          <div 
+            className="flex flex-col bg-gray-900 transition-all duration-200"
+            style={{ width: `${100 - editorWidth}%` }}
+          >
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-300">Output</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleClearOutput}
+                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={toggleOutputPanel}
+                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                  title="Close output panel"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              <pre className="text-sm text-gray-300 font-mono whitespace-pre-wrap">
+                {output || 'Click "Run Code" to see output here...'}
+              </pre>
+            </div>
           </div>
-          <div className="flex-1 overflow-auto p-4">
-            <pre className="text-sm text-gray-300 font-mono whitespace-pre-wrap">
-              {output || 'Click "Run Code" to see output here...'}
-            </pre>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
