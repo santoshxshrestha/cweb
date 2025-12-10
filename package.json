@@ -1,6 +1,7 @@
 {
-  "name": "compiler",
+  "name": "webc",
   "version": "0.1.0",
+  "description": "A modern online C compiler that runs entirely in your browser using WebAssembly",
   "private": true,
   "scripts": {
     "dev": "next dev",

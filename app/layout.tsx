@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "C Online Compiler",
-  description: "Write, compile, and run C programs in your browser with auto-completion",
+  title: "WebC - Online C Compiler",
+  description: "Write, compile, and run C programs in your browser using WebAssembly. No installation required.",
 };
 
 export default function RootLayout({

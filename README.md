@@ -1,6 +1,6 @@
-# C Online Compiler
+# WebC
 
-An online C compiler that runs entirely in your browser using WebAssembly. Write, compile, and execute C programs without any backend server.
+A modern online C compiler that runs entirely in your browser using WebAssembly. Write, compile, and execute C programs without any backend server.
 
 ## Features
 

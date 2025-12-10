@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { initWasm, compileAndRunC, isWasmInitialized } from '@/lib/wasmLoader';
 
@@ -21,13 +21,39 @@ int main() {
     return 0;
 }`;
 
+// Available editor themes
+const EDITOR_THEMES = [
+  { value: 'monokai', label: 'Monokai' },
+  { value: 'github', label: 'GitHub Light' },
+  { value: 'dracula', label: 'Dracula' },
+  { value: 'tomorrow_night', label: 'Tomorrow Night' },
+  { value: 'solarized_dark', label: 'Solarized Dark' },
+  { value: 'solarized_light', label: 'Solarized Light' },
+  { value: 'terminal', label: 'Terminal' },
+  { value: 'twilight', label: 'Twilight' },
+] as const;
+
+type EditorTheme = typeof EDITOR_THEMES[number]['value'];
+
 export default function Home() {
+  // Code editor state
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [theme, setTheme] = useState<'monokai' | 'github'>('monokai');
+  const [theme, setTheme] = useState<EditorTheme>('monokai');
   const [vimMode, setVimMode] = useState(false);
   const [wasmReady, setWasmReady] = useState(false);
+
+  // UI state
+  const [isOutputVisible, setIsOutputVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editorWidth, setEditorWidth] = useState(66.67); // 2/3 of screen in percentage
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Refs for resizing
+  const containerRef = useRef<HTMLDivElement>(null);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(0);
 
   // Initialize WASM module on component mount
   useEffect(() => {
@@ -87,7 +113,7 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="text-2xl font-bold text-white">C Compiler</div>
+          <div className="text-2xl font-bold text-white">WebC</div>
           <div className={`px-3 py-1 text-white text-sm rounded-full ${wasmReady ? 'bg-green-600' : 'bg-yellow-600'}`}>
             {wasmReady ? 'Ready' : 'Loading...'}
           </div>
@@ -177,7 +203,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 py-3 bg-gray-900 border-t border-gray-800 text-center text-xs text-gray-500">
-        C Online Compiler - Write, compile, and run C programs in your browser using WebAssembly
+        WebC - Write, compile, and run C programs in your browser using WebAssembly
       </footer>
     </div>
   );
