@@ -1,6 +1,12 @@
 use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::cell::RefCell;
+
+thread_local! {
+    static INTERPRETER_STATE: RefCell<Option<CInterpreter>> = RefCell::new(None);
+    static SOURCE_CODE: RefCell<Option<String>> = RefCell::new(None);
+}
 
 #[wasm_bindgen]
 extern "C" {
@@ -28,6 +34,11 @@ pub fn init() {
 /// Returns a JSON string with compilation result
 #[wasm_bindgen]
 pub fn compile_and_run_c(c_code: &str) -> String {
+    // Store source code for potential resume
+    SOURCE_CODE.with(|sc| {
+        *sc.borrow_mut() = Some(c_code.to_string());
+    });
+    
     let result = match compile_c_code(c_code) {
         Ok(output) => CompilationResult {
             success: true,
@@ -36,13 +47,27 @@ pub fn compile_and_run_c(c_code: &str) -> String {
             needs_input: None,
             state: None,
         },
-        Err(error) => CompilationResult {
-            success: false,
-            output: String::new(),
-            error: Some(error),
-            needs_input: None,
-            state: None,
-        },
+        Err(error) => {
+            // Check if this is an input request
+            if error.starts_with("INPUT_NEEDED:") {
+                let prompt = error.strip_prefix("INPUT_NEEDED:").unwrap_or("Enter input");
+                CompilationResult {
+                    success: false,
+                    output: String::new(),
+                    error: None,
+                    needs_input: Some(prompt.to_string()),
+                    state: Some("waiting".to_string()),
+                }
+            } else {
+                CompilationResult {
+                    success: false,
+                    output: String::new(),
+                    error: Some(error),
+                    needs_input: None,
+                    state: None,
+                }
+            }
+        }
     };
 
     serde_json::to_string(&result).unwrap_or_else(|_| {
@@ -54,6 +79,73 @@ pub fn compile_and_run_c(c_code: &str) -> String {
 enum ExecutionResult {
     Complete(String),
     NeedsInput { prompt: String, format_spec: String },
+}
+
+/// Provide input to a waiting program
+#[wasm_bindgen]
+pub fn provide_input(input: &str) -> String {
+    let code = SOURCE_CODE.with(|sc| {
+        sc.borrow().clone()
+    });
+    
+    if code.is_none() {
+        return serde_json::to_string(&CompilationResult {
+            success: false,
+            output: String::new(),
+            error: Some("No program waiting for input".to_string()),
+            needs_input: None,
+            state: None,
+        }).unwrap();
+    }
+    
+    let code = code.unwrap();
+    
+    // Create interpreter with input buffer
+    let mut interpreter = CInterpreter::new();
+    interpreter.input_buffer.push(input.to_string());
+    
+    // Try to execute again
+    let result = match interpreter.execute(&code) {
+        Ok(output) => CompilationResult {
+            success: true,
+            output,
+            error: None,
+            needs_input: None,
+            state: None,
+        },
+        Err(error) => {
+            // Check if we need more input
+            if error.starts_with("INPUT_NEEDED:") {
+                let prompt = error.strip_prefix("INPUT_NEEDED:").unwrap_or("Enter input");
+                CompilationResult {
+                    success: false,
+                    output: interpreter.output.clone(),
+                    error: None,
+                    needs_input: Some(prompt.to_string()),
+                    state: Some("waiting".to_string()),
+                }
+            } else {
+                CompilationResult {
+                    success: false,
+                    output: interpreter.output.clone(),
+                    error: Some(error),
+                    needs_input: None,
+                    state: None,
+                }
+            }
+        }
+    };
+    
+    // Clear source if complete
+    if result.needs_input.is_none() {
+        SOURCE_CODE.with(|sc| {
+            *sc.borrow_mut() = None;
+        });
+    }
+    
+    serde_json::to_string(&result).unwrap_or_else(|_| {
+        r#"{"success":false,"output":"","error":"Failed to serialize result"}"#.to_string()
+    })
 }
 
 /// Simple C interpreter for basic C programs

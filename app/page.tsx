@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { initWasm, compileAndRunC } from '@/lib/wasmLoader';
+import { initWasm, compileAndRunC, provideInput } from '@/lib/wasmLoader';
 
 // Dynamically import CodeEditor to avoid SSR issues with Ace Editor
 const CodeEditor = dynamic(() => import('@/components/CodeEditor'), {
@@ -43,6 +43,12 @@ export default function Home() {
   const [theme, setTheme] = useState<EditorTheme>('monokai');
   const [vimMode, setVimMode] = useState(false);
   const [wasmReady, setWasmReady] = useState(false);
+
+  // Input state
+  const [needsInput, setNeedsInput] = useState(false);
+  const [inputPrompt, setInputPrompt] = useState('');
+  const [userInput, setUserInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // UI state
   const [isOutputVisible, setIsOutputVisible] = useState(true);
