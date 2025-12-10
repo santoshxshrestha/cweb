@@ -136,6 +136,7 @@ export default function Home() {
 
     setIsRunning(true);
     setOutput('Compiling and running...\n');
+    setNeedsInput(false);
     
     // Show output panel when running code
     if (!isOutputVisible) {
@@ -148,12 +149,56 @@ export default function Home() {
       
       if (result.success) {
         setOutput(`Output:\n${result.output}\n\nProgram completed successfully.`);
+      } else if (result.needs_input) {
+        // Program needs input
+        setNeedsInput(true);
+        setInputPrompt(result.needs_input);
+        setOutput(result.output || 'Waiting for input...');
+        setTimeout(() => inputRef.current?.focus(), 100);
       } else {
         setOutput(`Compilation Error:\n${result.error || 'Unknown error'}`);
       }
     } catch (error) {
       setOutput(`Error: ${error}\n\nPlease check your code and try again.`);
     } finally {
+      if (!needsInput) {
+        setIsRunning(false);
+      }
+    }
+  };
+
+  const handleProvideInput = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!userInput.trim()) {
+      return;
+    }
+    
+    // Append input to output
+    setOutput(prev => prev + `\n> ${userInput}\n`);
+    
+    try {
+      const result = await provideInput(userInput);
+      
+      if (result.success) {
+        setOutput(prev => prev + result.output + '\n\nProgram completed successfully.');
+        setNeedsInput(false);
+        setIsRunning(false);
+      } else if (result.needs_input) {
+        // Program needs more input
+        setInputPrompt(result.needs_input);
+        setOutput(prev => prev + (result.output || ''));
+        setTimeout(() => inputRef.current?.focus(), 100);
+      } else {
+        setOutput(prev => prev + `\nError: ${result.error || 'Unknown error'}`);
+        setNeedsInput(false);
+        setIsRunning(false);
+      }
+      
+      setUserInput('');
+    } catch (error) {
+      setOutput(prev => prev + `\nError: ${error}`);
+      setNeedsInput(false);
       setIsRunning(false);
     }
   };
@@ -279,6 +324,27 @@ export default function Home() {
               <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
                 {output || 'Click "Run" to see output here...'}
               </pre>
+              
+              {/* Input Form */}
+              {needsInput && (
+                <form onSubmit={handleProvideInput} className="mt-3 flex gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder={inputPrompt || 'Enter input...'}
+                    className="flex-1 px-2 py-1 text-xs bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                  >
+                    Submit
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         )}
