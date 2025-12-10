@@ -6,9 +6,12 @@ A modern online C compiler that runs entirely in your browser using WebAssembly.
 
 - **In-Browser Compilation**: Compile and run C code directly in your browser using WebAssembly
 - **Real-Time Editing**: Code editor with syntax highlighting for C programming
-- **Multiple Themes**: Switch between dark (Monokai) and light (GitHub) themes
+- **8 Editor Themes**: Choose from Monokai, GitHub Light, Dracula, Tomorrow Night, Solarized Dark/Light, Terminal, and Twilight
 - **Vim Mode**: Optional Vim keybindings for power users
 - **Auto-Completion**: IntelliSense-style autocomplete for C keywords and standard library functions
+- **Resizable Panels**: Drag the resize handle to adjust editor/output panel sizes
+- **Fullscreen Mode**: Distraction-free coding experience
+- **Toggle Output Panel**: Hide output panel for maximum code editing space
 - **Zero Backend**: Everything runs client-side - no server required
 
 ## Getting Started
@@ -83,11 +86,91 @@ compiler/
 
 ## Supported C Features
 
-Currently supports:
-- `printf()` with format specifiers (%d, %i)
-- Variable declarations (int)
-- Basic arithmetic operations (+, -, *, /)
-- Simple expressions and assignments
+The C interpreter now supports a comprehensive set of features:
+
+### Data Types
+- `int` - Integer variables
+- `float` / `double` - Floating-point numbers
+- `char` - Character variables
+
+### Control Flow
+- `if` statements - Conditional execution
+- `for` loops - Definite iteration with initialization, condition, and increment
+- `while` loops - Indefinite iteration
+
+### Operators
+- Arithmetic: `+`, `-`, `*`, `/`, `%` (modulo)
+- Comparison: `<`, `>`, `<=`, `>=`, `==`, `!=`
+- Increment/Decrement: `++`, `--`
+
+### Standard Library Functions
+
+#### Input/Output (stdio.h)
+- `printf()` - Formatted output with specifiers: `%d`, `%i`, `%f`, `%lf`, `%c`, `%s`, `%ld`, `%u`
+- `puts()` - Print string with newline
+- `scanf()` - Input handling (basic support)
+
+#### String Functions (string.h)
+- `strlen()` - Get string length
+
+#### Math Functions (math.h)
+- `sqrt()` - Square root
+- `pow()` - Power function
+- `abs()` - Absolute value
+- `sin()`, `cos()`, `tan()` - Trigonometric functions (basic support)
+
+### Example Programs
+
+**Hello World with Variables:**
+```c
+#include <stdio.h>
+
+int main() {
+    int x = 42;
+    printf("The answer is %d\n", x);
+    return 0;
+}
+```
+
+**For Loop:**
+```c
+#include <stdio.h>
+
+int main() {
+    for(int i = 0; i < 5; i++) {
+        printf("%d ", i);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+**Math Operations:**
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 10;
+    int b = 20;
+    int sum = a + b;
+    int product = a * b;
+    printf("Sum: %d, Product: %d\n", sum, product);
+    return 0;
+}
+```
+
+**Conditional Statements:**
+```c
+#include <stdio.h>
+
+int main() {
+    int num = 15;
+    if(num > 10) {
+        printf("Number is greater than 10\n");
+    }
+    return 0;
+}
+```
 
 ## Building for Production
 

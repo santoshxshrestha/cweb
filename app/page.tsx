@@ -174,19 +174,19 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-gray-950">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl font-bold text-white">WebC</div>
-          <div className={`px-3 py-1 text-white text-sm rounded-full ${wasmReady ? 'bg-green-600' : 'bg-yellow-600'}`}>
+      <header className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
+        <div className="flex items-center gap-2">
+          <div className="text-xl font-bold text-white">WebC</div>
+          <div className={`px-2 py-0.5 text-white text-xs rounded-full ${wasmReady ? 'bg-green-600' : 'bg-yellow-600'}`}>
             {wasmReady ? 'Ready' : 'Loading...'}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Theme Selector */}
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value as EditorTheme)}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-2 py-1 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {EDITOR_THEMES.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -196,7 +196,7 @@ export default function Home() {
           {/* Vim Mode Toggle */}
           <button
             onClick={toggleVimMode}
-            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+            className={`px-2 py-1 text-xs rounded transition-colors ${
               vimMode 
                 ? 'bg-purple-600 hover:bg-purple-700 text-white' 
                 : 'bg-gray-800 hover:bg-gray-700 text-white'
@@ -209,40 +209,40 @@ export default function Home() {
           {/* Output Panel Toggle */}
           <button
             onClick={toggleOutputPanel}
-            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+            className={`px-2 py-1 text-xs rounded transition-colors ${
               isOutputVisible 
                 ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                 : 'bg-gray-800 hover:bg-gray-700 text-white'
             }`}
             title="Toggle output panel"
           >
-            {isOutputVisible ? '📊 Hide Output' : '📊 Show Output'}
+            {isOutputVisible ? '📊' : '📊'}
           </button>
 
           {/* Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors"
             title="Toggle fullscreen"
           >
-            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+            {isFullscreen ? '⤓' : '⤢'}
           </button>
 
           {/* Run Code Button */}
           <button
             onClick={handleRunCode}
             disabled={isRunning || !wasmReady}
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+            className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors flex items-center gap-1.5"
           >
             {isRunning ? (
               <>
-                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Running...
               </>
             ) : (
               <>
                 <span>▶</span>
-                Run Code
+                Run
               </>
             )}
           </button>
