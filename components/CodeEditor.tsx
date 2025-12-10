@@ -7,6 +7,12 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-c_cpp';
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-dracula';
+import 'ace-builds/src-noconflict/theme-tomorrow_night';
+import 'ace-builds/src-noconflict/theme-solarized_dark';
+import 'ace-builds/src-noconflict/theme-solarized_light';
+import 'ace-builds/src-noconflict/theme-terminal';
+import 'ace-builds/src-noconflict/theme-twilight';
 import 'ace-builds/src-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/ext-searchbox';
 import 'ace-builds/src-noconflict/keybinding-vim';
@@ -14,7 +20,7 @@ import 'ace-builds/src-noconflict/keybinding-vim';
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  theme?: 'monokai' | 'github';
+  theme?: string;
   readOnly?: boolean;
   vimMode?: boolean;
 }
