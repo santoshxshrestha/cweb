@@ -298,7 +298,10 @@ export default function Home() {
           }`}
           title="Toggle Vim mode"
         >
-          <span className="text-xs">⌨</span>
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M9 9l3 3-3 3M15 12h-3" />
+          </svg>
           <span>Vim</span>
         </button>
 
@@ -312,7 +315,10 @@ export default function Home() {
           }`}
           title="Toggle output panel"
         >
-          <span className="text-xs">📊</span>
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="M6 8l4 4-4 4M12 16h6" />
+          </svg>
           <span>Out</span>
         </button>
 
@@ -322,7 +328,15 @@ export default function Home() {
           className="px-2 py-1.5 text-[10px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors flex flex-col items-center gap-0.5"
           title="Toggle fullscreen"
         >
-          <span className="text-xs">{isFullscreen ? '⤓' : '⤢'}</span>
+          {isFullscreen ? (
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
+            </svg>
+          ) : (
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h6v6M21 3h-6v6M21 21h-6v-6M3 21h6v-6" />
+            </svg>
+          )}
           <span>{isFullscreen ? 'Exit' : 'Full'}</span>
         </button>
       </div>
