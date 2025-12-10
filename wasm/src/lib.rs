@@ -57,6 +57,7 @@ enum Value {
     Char(char),
     Bool(bool),
     Array(Vec<Value>),
+    Pointer(i64), // Simulated memory address
 }
 
 #[derive(Clone, Debug)]
@@ -64,6 +65,64 @@ struct Function {
     params: Vec<(String, String)>, // (type, name)
     body: String,
     return_type: String,
+}
+
+// Simulated memory system for pointers
+struct Memory {
+    heap: HashMap<i64, Value>,
+    next_address: i64,
+    // Map variable names to their simulated addresses
+    address_map: HashMap<String, i64>,
+}
+
+impl Memory {
+    fn new() -> Self {
+        Memory {
+            heap: HashMap::new(),
+            next_address: 0x1000, // Start at a "realistic" address
+            address_map: HashMap::new(),
+        }
+    }
+
+    fn allocate(&mut self, value: Value) -> i64 {
+        let addr = self.next_address;
+        self.heap.insert(addr, value);
+        self.next_address += 8; // Simulate 8-byte alignment
+        addr
+    }
+
+    fn get_address_of(&mut self, var_name: &str, value: &Value) -> i64 {
+        if let Some(&addr) = self.address_map.get(var_name) {
+            addr
+        } else {
+            let addr = self.next_address;
+            self.heap.insert(addr, value.clone());
+            self.address_map.insert(var_name.to_string(), addr);
+            self.next_address += 8;
+            addr
+        }
+    }
+
+    fn read(&self, addr: i64) -> Result<Value, String> {
+        self.heap.get(&addr)
+            .cloned()
+            .ok_or_else(|| format!("Segmentation fault: invalid memory address 0x{:x}", addr))
+    }
+
+    fn write(&mut self, addr: i64, value: Value) -> Result<(), String> {
+        if self.heap.contains_key(&addr) {
+            self.heap.insert(addr, value);
+            Ok(())
+        } else {
+            Err(format!("Segmentation fault: invalid memory address 0x{:x}", addr))
+        }
+    }
+
+    fn update_variable_address(&mut self, var_name: &str, value: &Value) {
+        if let Some(&addr) = self.address_map.get(var_name) {
+            self.heap.insert(addr, value.clone());
+        }
+    }
 }
 
 struct CInterpreter {
@@ -74,6 +133,7 @@ struct CInterpreter {
     input_buffer: Vec<String>,
     loop_break: bool,
     loop_continue: bool,
+    memory: Memory,
 }
 
 impl CInterpreter {
@@ -86,6 +146,7 @@ impl CInterpreter {
             input_buffer: Vec::new(),
             loop_break: false,
             loop_continue: false,
+            memory: Memory::new(),
         }
     }
 
@@ -687,7 +748,7 @@ impl CInterpreter {
         
         // Handle format specifiers
         let mut arg_index = 1;
-        let format_specs = vec!["%d", "%i", "%f", "%lf", "%c", "%s", "%ld", "%u", "%x", "%o"];
+        let format_specs = vec!["%p", "%d", "%i", "%f", "%lf", "%c", "%s", "%ld", "%u", "%x", "%o"];
         
         for spec in format_specs {
             while result.contains(spec) && arg_index < parts.len() {
@@ -707,6 +768,15 @@ impl CInterpreter {
                     Value::String(s) => s,
                     Value::Bool(b) => (b as i32).to_string(),
                     Value::Array(_) => "[array]".to_string(),
+                    Value::Pointer(addr) => {
+                        if spec == "%x" {
+                            format!("{:x}", addr)
+                        } else if spec == "%p" {
+                            format!("0x{:x}", addr)
+                        } else {
+                            format!("0x{:x}", addr)
+                        }
+                    },
                 };
                 
                 if let Some(pos) = result.find(spec) {
@@ -1034,8 +1104,17 @@ impl CInterpreter {
             return Err("Unknown type".to_string());
         };
 
+        // Handle pointer declarations (e.g., int *ptr or int* ptr)
+        let rest = rest.trim();
+        let is_pointer = rest.starts_with('*');
+        let rest = if is_pointer {
+            rest.trim_start_matches('*').trim()
+        } else {
+            rest
+        };
+
         // Handle array declarations
-        if rest.contains('[') {
+        if rest.contains('[') && !is_pointer {
             let bracket_pos = rest.find('[').unwrap();
             let var_name = rest[..bracket_pos].trim().to_string();
             let bracket_end = rest.find(']').ok_or("Invalid array syntax")?;
@@ -1052,8 +1131,13 @@ impl CInterpreter {
                 _ => Value::Int(0),
             };
             
-            let array = vec![default_value; size];
-            self.variables.insert(var_name, Value::Array(array));
+            let array = vec![default_value.clone(); size];
+            let array_value = Value::Array(array);
+            
+            // Store array in memory and create a "pointer" to it
+            let addr = self.memory.allocate(array_value.clone());
+            self.memory.address_map.insert(var_name.clone(), addr);
+            self.variables.insert(var_name, array_value);
             return Ok(());
         }
 
@@ -1061,39 +1145,119 @@ impl CInterpreter {
             let var_name = rest[..eq_pos].trim().to_string();
             let expr = rest[eq_pos + 1..].trim();
             
-            let value = match var_type {
-                "float" | "double" => {
-                    let num = self.evaluate_numeric_expression(expr)? as f64;
-                    Value::Float(num)
-                },
-                "char" => {
-                    if expr.starts_with('\'') {
-                        let ch = expr.trim_matches('\'').chars().next().unwrap_or('\0');
-                        Value::Char(ch)
-                    } else {
+            let value = if is_pointer {
+                // Handle pointer initialization
+                self.evaluate_pointer_expression(expr)?
+            } else {
+                match var_type {
+                    "float" | "double" => {
+                        let num = self.evaluate_numeric_expression(expr)? as f64;
+                        Value::Float(num)
+                    },
+                    "char" => {
+                        if expr.starts_with('\'') {
+                            let ch = expr.trim_matches('\'').chars().next().unwrap_or('\0');
+                            Value::Char(ch)
+                        } else {
+                            let num = self.evaluate_numeric_expression(expr)?;
+                            Value::Char(num as u8 as char)
+                        }
+                    },
+                    _ => {
                         let num = self.evaluate_numeric_expression(expr)?;
-                        Value::Char(num as u8 as char)
+                        Value::Int(num)
                     }
-                },
-                _ => {
-                    let num = self.evaluate_numeric_expression(expr)?;
-                    Value::Int(num)
                 }
             };
+            
+            if !is_pointer {
+                // For non-pointers, store them in memory so they can be referenced
+                let addr = self.memory.get_address_of(&var_name, &value);
+                self.memory.update_variable_address(&var_name, &value);
+            }
             
             self.variables.insert(var_name, value);
         } else {
             // Just declaration without initialization
             let var_name = rest.trim().to_string();
-            let value = match var_type {
-                "float" | "double" => Value::Float(0.0),
-                "char" => Value::Char('\0'),
-                _ => Value::Int(0),
+            let value = if is_pointer {
+                Value::Pointer(0) // NULL pointer
+            } else {
+                match var_type {
+                    "float" | "double" => Value::Float(0.0),
+                    "char" => Value::Char('\0'),
+                    _ => Value::Int(0),
+                }
             };
+            
+            if !is_pointer {
+                let addr = self.memory.get_address_of(&var_name, &value);
+                self.memory.update_variable_address(&var_name, &value);
+            }
+            
             self.variables.insert(var_name, value);
         }
         
         Ok(())
+    }
+
+    fn evaluate_pointer_expression(&mut self, expr: &str) -> Result<Value, String> {
+        let expr = expr.trim();
+        
+        // Handle NULL or 0
+        if expr == "NULL" || expr == "0" {
+            return Ok(Value::Pointer(0));
+        }
+        
+        // Handle address-of operator: &variable
+        if expr.starts_with('&') {
+            let var_name = expr[1..].trim();
+            
+            // Handle array element: &arr[index]
+            if var_name.contains('[') {
+                let bracket_pos = var_name.find('[').unwrap();
+                let array_name = var_name[..bracket_pos].trim();
+                let bracket_end = var_name.find(']').ok_or("Invalid array syntax")?;
+                let index_expr = &var_name[bracket_pos + 1..bracket_end];
+                let index = self.evaluate_numeric_expression(index_expr)? as usize;
+                
+                // Get base address of array and add offset
+                if let Some(&base_addr) = self.memory.address_map.get(array_name) {
+                    let element_addr = base_addr + (index as i64 * 8);
+                    return Ok(Value::Pointer(element_addr));
+                } else {
+                    return Err(format!("Variable '{}' not found", array_name));
+                }
+            }
+            
+            // Regular variable address
+            if let Some(value) = self.variables.get(var_name) {
+                let addr = self.memory.get_address_of(var_name, value);
+                return Ok(Value::Pointer(addr));
+            } else {
+                return Err(format!("Variable '{}' not found", var_name));
+            }
+        }
+        
+        // Handle dereference in expression (this is for pointer assignment)
+        if expr.starts_with('*') {
+            let ptr_expr = expr[1..].trim();
+            if let Some(Value::Pointer(addr)) = self.variables.get(ptr_expr) {
+                let value = self.memory.read(*addr)?;
+                return Ok(Value::Pointer(*addr)); // Return the address for pointer-to-pointer
+            }
+        }
+        
+        // Handle direct pointer variable or expression
+        if let Some(value) = self.variables.get(expr) {
+            if let Value::Pointer(addr) = value {
+                return Ok(Value::Pointer(*addr));
+            }
+        }
+        
+        // Try to evaluate as numeric expression (cast to pointer)
+        let num = self.evaluate_numeric_expression(expr)?;
+        Ok(Value::Pointer(num))
     }
 
     fn handle_compound_assignment(&mut self, statement: &str) -> Result<(), String> {
@@ -1141,6 +1305,44 @@ impl CInterpreter {
         let left = parts[0].trim();
         let expr = parts[1].trim();
 
+        // Handle pointer dereference assignment: *ptr = value
+        if left.starts_with('*') {
+            let ptr_name = left[1..].trim();
+            if let Some(Value::Pointer(addr)) = self.variables.get(ptr_name) {
+                let addr = *addr;
+                let value = if expr.starts_with('"') {
+                    Value::String(expr.trim_matches('"').to_string())
+                } else if expr.starts_with('\'') {
+                    Value::Char(expr.trim_matches('\'').chars().next().unwrap_or('\0'))
+                } else if expr.starts_with('&') {
+                    // Assigning an address
+                    self.evaluate_pointer_expression(expr)?
+                } else {
+                    // Try numeric or variable
+                    if let Some(var_value) = self.variables.get(expr) {
+                        var_value.clone()
+                    } else {
+                        let num = self.evaluate_numeric_expression(expr)?;
+                        Value::Int(num)
+                    }
+                };
+                
+                self.memory.write(addr, value.clone())?;
+                
+                // Update the variable map if this address corresponds to a variable
+                for (var_name, &var_addr) in &self.memory.address_map {
+                    if var_addr == addr {
+                        self.variables.insert(var_name.clone(), value.clone());
+                        break;
+                    }
+                }
+                
+                return Ok(());
+            } else {
+                return Err(format!("'{}' is not a valid pointer", ptr_name));
+            }
+        }
+
         // Handle array element assignment
         if left.contains('[') {
             let bracket_pos = left.find('[').unwrap();
@@ -1160,13 +1362,28 @@ impl CInterpreter {
             
             if let Some(Value::Array(arr)) = self.variables.get_mut(var_name) {
                 if index < arr.len() {
-                    arr[index] = value;
+                    arr[index] = value.clone();
+                    
+                    // Update memory if this array has an address
+                    if let Some(&base_addr) = self.memory.address_map.get(var_name) {
+                        let element_addr = base_addr + (index as i64 * 8);
+                        if self.memory.heap.contains_key(&element_addr) {
+                            self.memory.write(element_addr, value)?;
+                        }
+                    }
                 }
             }
             return Ok(());
         }
 
         let var_name = left.to_string();
+        
+        // Handle pointer assignment
+        if expr.starts_with('&') || (self.variables.get(&var_name).map(|v| matches!(v, Value::Pointer(_))).unwrap_or(false)) {
+            let value = self.evaluate_pointer_expression(expr)?;
+            self.variables.insert(var_name, value);
+            return Ok(());
+        }
         
         // Check if variable exists to determine type
         if let Some(existing_value) = self.variables.get(&var_name).cloned() {
@@ -1191,22 +1408,36 @@ impl CInterpreter {
                         existing_value
                     }
                 },
+                Value::Pointer(_) => {
+                    self.evaluate_pointer_expression(expr)?
+                },
                 _ => {
                     let num = self.evaluate_numeric_expression(expr)?;
                     Value::Int(num)
                 }
             };
-            self.variables.insert(var_name, value);
+            
+            self.variables.insert(var_name.clone(), value.clone());
+            
+            // Update memory
+            if let Some(&addr) = self.memory.address_map.get(&var_name) {
+                self.memory.write(addr, value)?;
+            }
         } else {
             // New variable
             let value = if expr.starts_with('"') {
                 Value::String(expr.trim_matches('"').to_string())
             } else if expr.starts_with('\'') {
                 Value::Char(expr.trim_matches('\'').chars().next().unwrap_or('\0'))
+            } else if expr.starts_with('&') {
+                self.evaluate_pointer_expression(expr)?
             } else {
                 let num = self.evaluate_numeric_expression(expr)?;
                 Value::Int(num)
             };
+            
+            let addr = self.memory.get_address_of(&var_name, &value);
+            self.memory.update_variable_address(&var_name, &value);
             self.variables.insert(var_name, value);
         }
         
@@ -1259,6 +1490,7 @@ impl CInterpreter {
                 Value::Bool(b) => Ok(*b as i64),
                 Value::String(_) => Err("Cannot convert string to number".to_string()),
                 Value::Array(_) => Err("Cannot convert array to number".to_string()),
+                Value::Pointer(addr) => Ok(*addr), // Pointer can be used as integer (address)
             };
         }
 
@@ -1280,6 +1512,34 @@ impl CInterpreter {
                         _ => Err("Invalid array element type".to_string()),
                     };
                 }
+            }
+        }
+
+        // Handle pointer dereference: *ptr
+        if expr.starts_with('*') {
+            let ptr_expr = expr[1..].trim();
+            if let Some(Value::Pointer(addr)) = self.variables.get(ptr_expr) {
+                let value = self.memory.read(*addr)?;
+                return match value {
+                    Value::Int(i) => Ok(i),
+                    Value::Float(f) => Ok(f as i64),
+                    Value::Char(c) => Ok(c as i64),
+                    Value::Bool(b) => Ok(b as i64),
+                    _ => Err("Cannot dereference to numeric value".to_string()),
+                };
+            } else {
+                return Err(format!("'{}' is not a valid pointer", ptr_expr));
+            }
+        }
+
+        // Handle address-of operator: &variable (returns address as number)
+        if expr.starts_with('&') {
+            let var_name = expr[1..].trim();
+            if let Some(value) = self.variables.get(var_name) {
+                let addr = self.memory.get_address_of(var_name, value);
+                return Ok(addr);
+            } else {
+                return Err(format!("Variable '{}' not found", var_name));
             }
         }
 
