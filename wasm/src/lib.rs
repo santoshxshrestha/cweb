@@ -13,6 +13,10 @@ pub struct CompilationResult {
     success: bool,
     output: String,
     error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    needs_input: Option<String>, // Prompt message if input is needed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    state: Option<String>, // Serialized interpreter state for resuming
 }
 
 #[wasm_bindgen(start)]
@@ -29,17 +33,27 @@ pub fn compile_and_run_c(c_code: &str) -> String {
             success: true,
             output,
             error: None,
+            needs_input: None,
+            state: None,
         },
         Err(error) => CompilationResult {
             success: false,
             output: String::new(),
             error: Some(error),
+            needs_input: None,
+            state: None,
         },
     };
 
     serde_json::to_string(&result).unwrap_or_else(|_| {
         r#"{"success":false,"output":"","error":"Failed to serialize result"}"#.to_string()
     })
+}
+
+/// Execution result that can signal need for input
+enum ExecutionResult {
+    Complete(String),
+    NeedsInput { prompt: String, format_spec: String },
 }
 
 /// Simple C interpreter for basic C programs
@@ -790,8 +804,95 @@ impl CInterpreter {
         Ok(())
     }
 
-    fn handle_scanf(&mut self, _statement: &str) -> Result<(), String> {
-        // Simplified scanf - just acknowledge it for now
+    fn handle_scanf(&mut self, statement: &str) -> Result<(), String> {
+        // Parse scanf("format", &var1, &var2, ...)
+        let start = statement.find('(').ok_or("Invalid scanf syntax")?;
+        let end = statement.rfind(')').ok_or("Invalid scanf syntax")?;
+        let args = &statement[start + 1..end];
+        
+        // Split by comma, but be careful of commas in strings
+        let mut parts = Vec::new();
+        let mut current = String::new();
+        let mut in_string = false;
+        
+        for ch in args.chars() {
+            match ch {
+                '"' => in_string = !in_string,
+                ',' if !in_string => {
+                    parts.push(current.trim().to_string());
+                    current.clear();
+                }
+                _ => current.push(ch),
+            }
+        }
+        if !current.is_empty() {
+            parts.push(current.trim().to_string());
+        }
+        
+        if parts.is_empty() {
+            return Err("Invalid scanf: no arguments".to_string());
+        }
+        
+        // First part is the format string
+        let format_str = parts[0].trim_matches('"').to_string();
+        let var_names: Vec<String> = parts[1..].iter()
+            .map(|s| s.trim().trim_start_matches('&').to_string())
+            .collect();
+        
+        // Check if we have input in the buffer
+        if self.input_buffer.is_empty() {
+            // Signal that we need input - for now just return error
+            return Err(format!("INPUT_NEEDED:{}", format_str));
+        }
+        
+        // Parse format string and assign values
+        let input_line = self.input_buffer.remove(0);
+        let input_values: Vec<&str> = input_line.split_whitespace().collect();
+        
+        let format_specs: Vec<&str> = format_str.match_indices('%')
+            .map(|(i, _)| {
+                let remaining = &format_str[i..];
+                if let Some(end_idx) = remaining.find(|c: char| c.is_alphabetic()) {
+                    &remaining[..=end_idx]
+                } else {
+                    ""
+                }
+            })
+            .collect();
+        
+        if var_names.len() != format_specs.len() {
+            return Err(format!("scanf: format specifier count ({}) doesn't match variable count ({})", 
+                format_specs.len(), var_names.len()));
+        }
+        
+        for (i, var_name) in var_names.iter().enumerate() {
+            if i >= input_values.len() {
+                return Err(format!("scanf: not enough input values provided"));
+            }
+            
+            let format_spec = format_specs[i];
+            let input_val = input_values[i];
+            
+            // Parse based on format specifier
+            let value = if format_spec.contains('d') || format_spec.contains('i') {
+                Value::Int(input_val.parse::<i64>()
+                    .map_err(|_| format!("scanf: invalid integer: {}", input_val))?)
+            } else if format_spec.contains('f') || format_spec.contains("lf") {
+                Value::Float(input_val.parse::<f64>()
+                    .map_err(|_| format!("scanf: invalid float: {}", input_val))?)
+            } else if format_spec.contains('c') {
+                Value::Char(input_val.chars().next()
+                    .ok_or_else(|| "scanf: empty input for char".to_string())?)
+            } else if format_spec.contains('s') {
+                Value::String(input_val.to_string())
+            } else {
+                return Err(format!("scanf: unsupported format specifier: {}", format_spec));
+            };
+            
+            self.variables.insert(var_name.clone(), value.clone());
+            self.memory.update_variable_address(var_name, &value);
+        }
+        
         Ok(())
     }
 
@@ -805,8 +906,23 @@ impl CInterpreter {
         Ok(())
     }
 
-    fn handle_gets(&mut self, _statement: &str) -> Result<(), String> {
-        // Simplified gets - just acknowledge it for now
+    fn handle_gets(&mut self, statement: &str) -> Result<(), String> {
+        // Parse gets(variable)
+        let start = statement.find('(').ok_or("Invalid gets syntax")?;
+        let end = statement.rfind(')').ok_or("Invalid gets syntax")?;
+        let var_name = statement[start + 1..end].trim();
+        
+        // Check if we have input in the buffer
+        if self.input_buffer.is_empty() {
+            return Err("INPUT_NEEDED:Enter a line of text".to_string());
+        }
+        
+        let input_line = self.input_buffer.remove(0);
+        let value = Value::String(input_line);
+        
+        self.variables.insert(var_name.to_string(), value.clone());
+        self.memory.update_variable_address(var_name, &value);
+        
         Ok(())
     }
 
