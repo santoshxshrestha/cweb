@@ -172,100 +172,31 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="text-xl font-bold text-white">WebC</div>
-          <div className={`px-2 py-0.5 text-white text-xs rounded-full ${wasmReady ? 'bg-green-600' : 'bg-yellow-600'}`}>
-            {wasmReady ? 'Ready' : 'Loading...'}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Theme Selector */}
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as EditorTheme)}
-            className="px-2 py-1 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {EDITOR_THEMES.map(t => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-
-          {/* Vim Mode Toggle */}
-          <button
-            onClick={toggleVimMode}
-            className={`px-2 py-1 text-xs rounded transition-colors ${
-              vimMode 
-                ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                : 'bg-gray-800 hover:bg-gray-700 text-white'
-            }`}
-            title="Toggle Vim mode"
-          >
-            Vim: {vimMode ? 'ON' : 'OFF'}
-          </button>
-
-          {/* Output Panel Toggle */}
-          <button
-            onClick={toggleOutputPanel}
-            className={`px-2 py-1 text-xs rounded transition-colors ${
-              isOutputVisible 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'bg-gray-800 hover:bg-gray-700 text-white'
-            }`}
-            title="Toggle output panel"
-          >
-            {isOutputVisible ? '📊' : '📊'}
-          </button>
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors"
-            title="Toggle fullscreen"
-          >
-            {isFullscreen ? '⤓' : '⤢'}
-          </button>
-
-          {/* Run Code Button */}
-          <button
-            onClick={handleRunCode}
-            disabled={isRunning || !wasmReady}
-            className="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors flex items-center gap-1.5"
-          >
-            {isRunning ? (
-              <>
-                <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Running...
-              </>
-            ) : (
-              <>
-                <span>▶</span>
-                Run
-              </>
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <div className="flex h-screen bg-gray-950">
+      {/* Main Content Area */}
       <div ref={containerRef} className="flex flex-1 overflow-hidden">
         {/* Editor Panel */}
         <div 
           className="flex flex-col border-r border-gray-800 transition-all duration-200"
           style={{ width: isOutputVisible ? `${editorWidth}%` : '100%' }}
         >
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
-            <h2 className="text-sm font-semibold text-gray-300">main.c</h2>
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between px-3 py-1 bg-gray-900 border-b border-gray-800">
+            <div className="flex items-center gap-2">
+              <div className="text-lg font-bold text-white">CWeb</div>
+              <div 
+                className={`w-2 h-2 rounded-full ${wasmReady ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-red-500 shadow-lg shadow-red-500/50'}`}
+                title={wasmReady ? 'Compiler ready' : 'Loading compiler...'}
+              />
+              <span className="text-xs text-gray-500">main.c</span>
+            </div>
+            <div className="flex items-center gap-2">
               {vimMode && (
-                <div className="px-2 py-1 bg-purple-600 text-white text-xs rounded font-medium">
-                  VIM MODE
+                <div className="px-2 py-0.5 bg-purple-600 text-white text-xs rounded">
+                  VIM
                 </div>
               )}
               <div className="text-xs text-gray-500">
-                Press Ctrl+Space for auto-completion
+                Ctrl+Space: autocomplete
               </div>
             </div>
           </div>
@@ -296,37 +227,105 @@ export default function Home() {
             className="flex flex-col bg-gray-900 transition-all duration-200"
             style={{ width: `${100 - editorWidth}%` }}
           >
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-300">Output</h2>
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between px-3 py-1 bg-gray-800 border-b border-gray-700">
+              <h2 className="text-xs font-semibold text-gray-300">Output</h2>
+              <div className="flex gap-1">
                 <button
                   onClick={handleClearOutput}
-                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                  className="px-2 py-0.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
                 >
                   Clear
                 </button>
                 <button
                   onClick={toggleOutputPanel}
-                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                  className="px-2 py-0.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
                   title="Close output panel"
                 >
                   ✕
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-4">
-              <pre className="text-sm text-gray-300 font-mono whitespace-pre-wrap">
-                {output || 'Click "Run Code" to see output here...'}
+            <div className="flex-1 overflow-auto p-3">
+              <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
+                {output || 'Click "Run" to see output here...'}
               </pre>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="px-6 py-3 bg-gray-900 border-t border-gray-800 text-center text-xs text-gray-500">
-        WebC - Write, compile, and run C programs in your browser using WebAssembly
-      </footer>
+      {/* Right Control Panel */}
+      <div className="flex flex-col gap-1 p-1 bg-gray-900 border-l border-gray-800">
+        {/* Run Button */}
+        <button
+          onClick={handleRunCode}
+          disabled={isRunning || !wasmReady}
+          className="px-2 py-1.5 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded transition-colors flex flex-col items-center gap-0.5 min-w-[60px]"
+          title="Run code (Ctrl+Enter)"
+        >
+          {isRunning ? (
+            <>
+              <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="text-[10px]">Run...</span>
+            </>
+          ) : (
+            <>
+              <span className="text-base">▶</span>
+              <span className="text-[10px]">Run</span>
+            </>
+          )}
+        </button>
+
+        {/* Theme Selector */}
+        <select
+          value={theme}
+          onChange={(e) => setTheme(e.target.value as EditorTheme)}
+          className="px-1 py-1 text-[10px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+          title="Select theme"
+        >
+          {EDITOR_THEMES.map(t => (
+            <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+
+        {/* Vim Mode Toggle */}
+        <button
+          onClick={toggleVimMode}
+          className={`px-2 py-1.5 text-[10px] rounded transition-colors flex flex-col items-center gap-0.5 ${
+            vimMode 
+              ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+              : 'bg-gray-800 hover:bg-gray-700 text-white'
+          }`}
+          title="Toggle Vim mode"
+        >
+          <span className="text-xs">⌨</span>
+          <span>Vim</span>
+        </button>
+
+        {/* Output Panel Toggle */}
+        <button
+          onClick={toggleOutputPanel}
+          className={`px-2 py-1.5 text-[10px] rounded transition-colors flex flex-col items-center gap-0.5 ${
+            isOutputVisible 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+              : 'bg-gray-800 hover:bg-gray-700 text-white'
+          }`}
+          title="Toggle output panel"
+        >
+          <span className="text-xs">📊</span>
+          <span>Out</span>
+        </button>
+
+        {/* Fullscreen Toggle */}
+        <button
+          onClick={toggleFullscreen}
+          className="px-2 py-1.5 text-[10px] bg-gray-800 hover:bg-gray-700 text-white rounded transition-colors flex flex-col items-center gap-0.5"
+          title="Toggle fullscreen"
+        >
+          <span className="text-xs">{isFullscreen ? '⤓' : '⤢'}</span>
+          <span>{isFullscreen ? 'Exit' : 'Full'}</span>
+        </button>
+      </div>
     </div>
   );
 }

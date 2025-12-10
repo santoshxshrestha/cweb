@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebC - Online C Compiler",
+  title: "CWeb - Online C Compiler",
   description: "Write, compile, and run C programs in your browser using WebAssembly. No installation required.",
 };
 
