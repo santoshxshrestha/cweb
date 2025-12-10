@@ -86,38 +86,71 @@ compiler/
 
 ## Supported C Features
 
-The C interpreter now supports a comprehensive set of features:
+The C interpreter supports a comprehensive set of C features:
 
 ### Data Types
 - `int` - Integer variables
 - `float` / `double` - Floating-point numbers
 - `char` - Character variables
+- `long` / `short` - Integer variations
+- **Arrays** - Single-dimensional arrays (e.g., `int arr[10]`)
 
 ### Control Flow
-- `if` statements - Conditional execution
+- `if` / `else` / `else if` statements - Full conditional execution
 - `for` loops - Definite iteration with initialization, condition, and increment
 - `while` loops - Indefinite iteration
+- `do-while` loops - Post-condition loops
+- `switch` / `case` / `default` - Multi-way branching
+- `break` - Exit loops early
+- `continue` - Skip to next iteration
 
 ### Operators
-- Arithmetic: `+`, `-`, `*`, `/`, `%` (modulo)
-- Comparison: `<`, `>`, `<=`, `>=`, `==`, `!=`
+
+#### Arithmetic
+- `+`, `-`, `*`, `/`, `%` (modulo)
+- Compound assignment: `+=`, `-=`, `*=`, `/=`, `%=`
 - Increment/Decrement: `++`, `--`
+
+#### Comparison
+- `<`, `>`, `<=`, `>=`, `==`, `!=`
+
+#### Logical
+- `&&` (AND), `||` (OR), `!` (NOT)
+
+#### Bitwise
+- `&` (AND), `|` (OR), `^` (XOR), `~` (NOT)
+- `<<` (left shift), `>>` (right shift)
+
+#### Other
+- `? :` (ternary operator)
 
 ### Standard Library Functions
 
 #### Input/Output (stdio.h)
-- `printf()` - Formatted output with specifiers: `%d`, `%i`, `%f`, `%lf`, `%c`, `%s`, `%ld`, `%u`
+- `printf()` - Formatted output with specifiers: `%d`, `%i`, `%f`, `%lf`, `%c`, `%s`, `%ld`, `%u`, `%x`, `%o`
 - `puts()` - Print string with newline
 - `scanf()` - Input handling (basic support)
+- `gets()` - Get string input (basic support)
 
 #### String Functions (string.h)
 - `strlen()` - Get string length
+- `strcpy()` - Copy strings
+- `strcat()` - Concatenate strings
+- `strcmp()` - Compare strings (basic support)
 
 #### Math Functions (math.h)
 - `sqrt()` - Square root
 - `pow()` - Power function
-- `abs()` - Absolute value
-- `sin()`, `cos()`, `tan()` - Trigonometric functions (basic support)
+- `abs()` / `fabs()` - Absolute value
+- `sin()`, `cos()`, `tan()` - Trigonometric functions
+- `ceil()` - Ceiling function
+- `floor()` - Floor function
+- `exp()` - Exponential function
+- `log()` - Natural logarithm
+
+#### Standard Library (stdlib.h)
+- `rand()` - Generate pseudo-random numbers
+- `srand()` - Seed random number generator (basic support)
 
 ### Example Programs
 
@@ -145,21 +178,7 @@ int main() {
 }
 ```
 
-**Math Operations:**
-```c
-#include <stdio.h>
-
-int main() {
-    int a = 10;
-    int b = 20;
-    int sum = a + b;
-    int product = a * b;
-    printf("Sum: %d, Product: %d\n", sum, product);
-    return 0;
-}
-```
-
-**Conditional Statements:**
+**If-Else Statement:**
 ```c
 #include <stdio.h>
 
@@ -167,27 +186,180 @@ int main() {
     int num = 15;
     if(num > 10) {
         printf("Number is greater than 10\n");
+    } else {
+        printf("Number is 10 or less\n");
     }
+    return 0;
+}
+```
+
+**Switch Statement:**
+```c
+#include <stdio.h>
+
+int main() {
+    int day = 3;
+    switch(day) {
+        case 1:
+            printf("Monday\n");
+            break;
+        case 2:
+            printf("Tuesday\n");
+            break;
+        case 3:
+            printf("Wednesday\n");
+            break;
+        default:
+            printf("Other day\n");
+    }
+    return 0;
+}
+```
+
+**Arrays:**
+```c
+#include <stdio.h>
+
+int main() {
+    int arr[5];
+    for(int i = 0; i < 5; i++) {
+        arr[i] = i * 2;
+    }
+    
+    for(int i = 0; i < 5; i++) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+**Logical Operators:**
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 10, b = 20;
+    if(a > 5 && b < 30) {
+        printf("Both conditions are true\n");
+    }
+    
+    if(a > 15 || b > 15) {
+        printf("At least one condition is true\n");
+    }
+    return 0;
+}
+```
+
+**Bitwise Operations:**
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 5;  // 0101 in binary
+    int b = 3;  // 0011 in binary
+    
+    printf("a & b = %d\n", a & b);  // AND: 1
+    printf("a | b = %d\n", a | b);  // OR: 7
+    printf("a ^ b = %d\n", a ^ b);  // XOR: 6
+    printf("a << 1 = %d\n", a << 1); // Left shift: 10
+    return 0;
+}
+```
+
+**Math Operations:**
+```c
+#include <stdio.h>
+#include <math.h>
+
+int main() {
+    double x = 16.0;
+    printf("sqrt(16) = %f\n", sqrt(x));
+    printf("pow(2, 3) = %f\n", pow(2, 3));
+    printf("ceil(4.3) = %f\n", ceil(4.3));
+    printf("floor(4.7) = %f\n", floor(4.7));
+    return 0;
+}
+```
+
+**String Functions:**
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char str1[20] = "Hello";
+    char str2[20] = " World";
+    
+    printf("Length of str1: %d\n", strlen(str1));
+    strcat(str1, str2);
+    printf("Concatenated: %s\n", str1);
+    return 0;
+}
+```
+
+**Break and Continue:**
+```c
+#include <stdio.h>
+
+int main() {
+    // Break example
+    for(int i = 0; i < 10; i++) {
+        if(i == 5) break;
+        printf("%d ", i);
+    }
+    printf("\n");
+    
+    // Continue example
+    for(int i = 0; i < 10; i++) {
+        if(i % 2 == 0) continue;
+        printf("%d ", i);  // Only odd numbers
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+**Ternary Operator:**
+```c
+#include <stdio.h>
+
+int main() {
+    int a = 10, b = 20;
+    int max = (a > b) ? a : b;
+    printf("Maximum: %d\n", max);
+    return 0;
+}
+```
+
+**Compound Assignment:**
+```c
+#include <stdio.h>
+
+int main() {
+    int x = 10;
+    x += 5;  // x = x + 5
+    printf("After += 5: %d\n", x);
+    x *= 2;  // x = x * 2
+    printf("After *= 2: %d\n", x);
     return 0;
 }
 ```
 
 ## Unsupported C Features
 
-This is an educational C interpreter with limited functionality. The following standard C features are **NOT supported**:
+While the interpreter now supports many C features, the following are still **NOT supported**:
 
 ### Data Types & Structures
-- ❌ **Arrays** - No array declarations or indexing
 - ❌ **Pointers** - No pointer arithmetic, dereferencing, or address-of operators (`*`, `&`)
-- ❌ **Strings** (as char arrays) - Limited string support, no string manipulation
+- ❌ **Multi-dimensional arrays** - Only 1D arrays supported
+- ❌ **Strings as char arrays with full manipulation** - Limited string support
 - ❌ **Structs** - No structure definitions or member access
 - ❌ **Unions** - Not supported
 - ❌ **Enums** - Not supported
 - ❌ **Typedef** - Cannot create custom type aliases
-- ❌ **Multi-dimensional arrays** - Not supported
 - ❌ **Static/Const/Volatile qualifiers** - Not supported
 - ❌ **Unsigned types** - Limited support
-- ❌ **Long/Short variations** - Limited support
 - ❌ **Size_t, ptrdiff_t** - Not supported
 
 ### Functions
@@ -197,24 +369,6 @@ This is an educational C interpreter with limited functionality. The following s
 - ❌ **Recursion** - Not supported
 - ❌ **Function pointers** - Not supported
 - ❌ **Variadic functions** - Not supported
-
-### Control Flow
-- ❌ **else/else if** - Only basic `if` statements supported
-- ❌ **switch/case** - Not supported
-- ❌ **do-while loops** - Only `for` and `while` supported
-- ❌ **break statement** - Not supported
-- ❌ **continue statement** - Not supported
-- ❌ **goto** - Not supported
-- ❌ **Nested loops/conditionals** - Limited or no support
-
-### Operators
-- ❌ **Logical operators** - `&&`, `||`, `!` not supported
-- ❌ **Bitwise operators** - `&`, `|`, `^`, `~`, `<<`, `>>` not supported
-- ❌ **Ternary operator** - `? :` not supported
-- ❌ **Compound assignment** - `+=`, `-=`, `*=`, `/=`, etc. not supported
-- ❌ **Comma operator** - Not supported
-- ❌ **sizeof operator** - Not supported
-- ❌ **Cast operators** - Type casting not supported
 
 ### Preprocessor Directives
 - ❌ **#define macros** - Macros are ignored
@@ -228,10 +382,10 @@ This is an educational C interpreter with limited functionality. The following s
 - ❌ **Stack vs Heap** - No memory model
 - ❌ **Memory addresses** - Cannot work with memory directly
 
-### Standard Library
-Most standard library functions are **NOT supported**, including:
+### Standard Library (Partial Support)
+Many standard library functions have limited or no support:
 
-#### stdio.h (limited support)
+#### stdio.h (limited)
 - ❌ `fprintf`, `sprintf`, `snprintf`
 - ❌ `fopen`, `fclose`, `fread`, `fwrite`
 - ❌ `getchar`, `putchar`
@@ -239,29 +393,24 @@ Most standard library functions are **NOT supported**, including:
 - ❌ `fseek`, `ftell`, `rewind`
 - ❌ File I/O operations
 
-#### string.h (minimal support)
-- ❌ `strcpy`, `strncpy`
-- ❌ `strcat`, `strncat`
-- ❌ `strcmp`, `strncmp`
-- ❌ `strchr`, `strrchr`
-- ❌ `strstr`
+#### string.h (minimal)
+- ❌ `strncpy`, `strncat`, `strncmp`
+- ❌ `strchr`, `strrchr`, `strstr`
 - ❌ `strtok`
 - ❌ `memcpy`, `memmove`, `memset`
 
-#### stdlib.h
+#### stdlib.h (minimal)
 - ❌ `malloc`, `calloc`, `realloc`, `free`
-- ❌ `rand`, `srand`
 - ❌ `atoi`, `atof`, `atol`
 - ❌ `exit`, `abort`
 - ❌ `system`
 - ❌ `qsort`, `bsearch`
 
-#### math.h (limited support)
-- ❌ `ceil`, `floor`, `round`
-- ❌ `exp`, `log`, `log10`
-- ❌ `fabs`, `fmod`
-- ❌ Most trigonometric functions
-- ❌ `asin`, `acos`, `atan`
+#### math.h (partial)
+- ❌ `round`, `fmod`
+- ❌ `log10`
+- ❌ `asin`, `acos`, `atan`, `atan2`
+- ❌ `sinh`, `cosh`, `tanh`
 
 #### time.h
 - ❌ All time-related functions
@@ -280,9 +429,8 @@ Most standard library functions are **NOT supported**, including:
 - ❌ **Command-line arguments** - `argc`/`argv` not supported
 
 ### Input/Output Limitations
-- ❌ **Interactive input** - `scanf()` has very limited support
+- ❌ **Interactive input** - `scanf()` and `gets()` have very limited support
 - ❌ **File operations** - Cannot read/write files
-- ❌ **Command-line I/O** - Limited to basic output
 - ❌ **Binary I/O** - Not supported
 - ❌ **Buffering control** - Not supported
 
@@ -293,15 +441,34 @@ Most standard library functions are **NOT supported**, including:
 - ❌ **Register variables** - Not supported
 - ❌ **Scope rules** - Simplified scope handling
 
+## What's New vs Original Unsupported List
+
+✅ **Now Supported:**
+- Arrays (1D)
+- else/else if statements
+- do-while loops
+- switch/case/default
+- break and continue statements
+- Logical operators (&&, ||, !)
+- Bitwise operators (&, |, ^, ~, <<, >>)
+- Ternary operator (? :)
+- Compound assignment operators (+=, -=, *=, /=, %=)
+- More string functions (strcpy, strcat)
+- More math functions (ceil, floor, exp, log)
+- rand() function
+- More printf format specifiers (%x, %o)
+
 ## Limitations Summary
 
-⚠️ **This is an educational interpreter, not a full C compiler.** It supports:
-- Basic arithmetic and variable operations
-- Simple control flow (if, for, while)
-- Limited standard library functions
-- No complex data structures, pointers, or memory management
+⚠️ **This is an educational interpreter, not a full C compiler.** It now supports:
+- Basic to intermediate C programming constructs
+- Arrays, control flow, and operators
+- Many standard library functions
+- Educational algorithm implementations
 
-**Use Case**: Learning basic C syntax and simple algorithms. For full C programming, use a real compiler like GCC or Clang.
+**Still Missing:** Pointers, structs, user-defined functions, dynamic memory, file I/O, and advanced C features.
+
+**Use Case**: Learning C syntax, implementing algorithms, and understanding control flow. For full C programming, use a real compiler like GCC or Clang.
 
 ## Building for Production
 
