@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { initWasm, compileAndRunC, isWasmInitialized } from '@/lib/wasmLoader';
 
 // Dynamically import CodeEditor to avoid SSR issues with Ace Editor
 const CodeEditor = dynamic(() => import('@/components/CodeEditor'), {
@@ -26,17 +27,47 @@ export default function Home() {
   const [isRunning, setIsRunning] = useState(false);
   const [theme, setTheme] = useState<'monokai' | 'github'>('monokai');
   const [vimMode, setVimMode] = useState(false);
+  const [wasmReady, setWasmReady] = useState(false);
+
+  // Initialize WASM module on component mount
+  useEffect(() => {
+    const loadWasm = async () => {
+      try {
+        await initWasm();
+        setWasmReady(true);
+        console.log('WASM module loaded successfully');
+      } catch (error) {
+        console.error('Failed to load WASM:', error);
+        setOutput(`Error: Failed to initialize compiler\n${error}`);
+      }
+    };
+
+    loadWasm();
+  }, []);
 
   const handleRunCode = async () => {
+    if (!wasmReady) {
+      setOutput('Error: Compiler is still loading. Please wait...');
+      return;
+    }
+
     setIsRunning(true);
     setOutput('Compiling and running...\n');
     
-    // TODO: Implement actual C compilation and execution
-    // This is a placeholder for the backend API call
-    setTimeout(() => {
-      setOutput('Output:\nHello, World!\n\nProgram exited successfully.');
+    try {
+      // Compile and run the C code using WASM
+      const result = await compileAndRunC(code);
+      
+      if (result.success) {
+        setOutput(`Output:\n${result.output}\n\nProgram completed successfully.`);
+      } else {
+        setOutput(`Compilation Error:\n${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setOutput(`Error: ${error}\n\nPlease check your code and try again.`);
+    } finally {
       setIsRunning(false);
-    }, 1500);
+    }
   };
 
   const handleClearOutput = () => {
@@ -57,7 +88,9 @@ export default function Home() {
       <header className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <div className="text-2xl font-bold text-white">C Compiler</div>
-          <div className="px-3 py-1 bg-blue-600 text-white text-sm rounded-full">Online</div>
+          <div className={`px-3 py-1 text-white text-sm rounded-full ${wasmReady ? 'bg-green-600' : 'bg-yellow-600'}`}>
+            {wasmReady ? 'Ready' : 'Loading...'}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -78,7 +111,7 @@ export default function Home() {
           </button>
           <button
             onClick={handleRunCode}
-            disabled={isRunning}
+            disabled={isRunning || !wasmReady}
             className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
           >
             {isRunning ? (
@@ -144,7 +177,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 py-3 bg-gray-900 border-t border-gray-800 text-center text-xs text-gray-500">
-        C Online Compiler - Write, compile, and run C programs in your browser
+        C Online Compiler - Write, compile, and run C programs in your browser using WebAssembly
       </footer>
     </div>
   );
